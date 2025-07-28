@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>비버의 이중암호 규칙</title>
+  <style>
+    body { font-family: 'Arial'; padding: 20px; line-height: 1.6; }
+    h1, h2 { color: #003366; }
+    .problem-box { border: 2px solid #ccc; padding: 15px; margin-top: 15px; background-color: #f9f9f9; }
+    .timer { font-size: 18px; font-weight: bold; color: red; }
+    .popup { display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #888; padding: 30px; z-index: 999; text-align: center; }
+    .popup button, #retryBtn { padding: 10px 20px; margin-top: 10px; display: none; }
+    .choices { margin-top: 15px; }
+    .choices label { display: block; margin-bottom: 5px; }
+    #resultMessage { margin-top: 15px; font-weight: bold; color: green; }
+  </style>
+</head>
+<body>
+  <h1>1. 타이틀: 비버의 이중암호 규칙</h1>
+  <h2>2. 대상 및 교과: 고1 공통수학2(함수)</h2>
+
+  <h3>3. 지문:</h3>
+  <p>비버는 친구에게 비밀 메시지를 보낼 때 특별한 암호 규칙을 사용합니다. 비버가 사용하는 문자에는 A, B, C, D, E 다섯 글자만 있습니다.<br>
+  비버는 다음과 같이 말합니다:<br>
+  "나는 한 번 변환할 때 두 단계로 나눠서 글자를 바꿔. 먼저, 모든 글자를 같은 방식으로 바꾸고, 그다음에는 홀수 번째 글자만 다시 한 번 더 바꾸지!"<br>
+  다음 예시는 몇 가지 입력 → 결과 예시입니다.</p>
+
+  <h3>4. 규칙 예시:</h3>
+  <ul>
+    <li>예시1: 입력: ABCDE → 결과: CCEEB</li>
+    <li>예시2: 입력: CCEEB → 결과: EDBAD</li>
+    <li>예시3: 입력: EEAAC → 결과: BACBE</li>
+  </ul>
+
+  <div class="problem-box">
+    <h3>5. 문제:</h3>
+    <p id="questionText">비버는 문자를 바꿀 때, 위치(1번, 2번, 3번...)가 홀수인지 짝수인지에 따라 다른 처리를 한다고 했습니다.<br>
+    예시들을 분석한 후, 비버가 문자 <span id="questionInput">EDCAB</span>을 위 규칙에 따라 5회 반복 변환하면 최종 결과는 무엇일까요?</p>
+
+    <div class="choices">
+      <label><input type="radio" name="answer" value="A"> A. <span id="choiceA">DABEC</span></label>
+      <label><input type="radio" name="answer" value="B"> B. <span id="choiceB">CBEAB</span></label>
+      <label><input type="radio" name="answer" value="C"> C. <span id="choiceC">EDAAB</span></label>
+      <label><input type="radio" name="answer" value="D"> D. <span id="choiceD">EDCAB</span></label>
+    </div>
+
+    <label>시간 설정:
+      <select id="timeSelect">
+        <option value="30">30초</option>
+        <option value="60">1분</option>
+        <option value="90">1분 30초</option>
+        <option value="120">2분</option>
+      </select>
+    </label>
+    <button onclick="startProblem()">문제 풀기</button>
+    <button onclick="submitAnswer()">정답 제출</button>
+    <button id="retryBtn" onclick="retry()">다시 도전하기</button>
+    <div id="timer" class="timer"></div>
+    <div id="resultMessage"></div>
+  </div>
+
+  <div class="popup" id="timeoutPopup">
+    <p>⏰ 시간 초과!</p>
+    <button onclick="retry()">다시 도전하기</button>
+  </div>
+
+  <script>
+    let timerInterval;
+    let currentCorrectAnswer = "B";
+    let timeLeft = 0;
+
+    const alphabet = ['A', 'B', 'C', 'D', 'E'];
+    const charToNum = { A: 0, B: 1, C: 2, D: 3, E: 4 };
+    const numToChar = ['A', 'B', 'C', 'D', 'E'];
+
+    function transform(word) {
+      let nums = [...word].map(c => (charToNum[c] + 2) % 5);
+      [0, 2, 4].forEach(i => nums[i] = (nums[i] + 2) % 5);
+      return nums.map(n => numToChar[n]).join('');
+    }
+
+    function repeatTransform(input, count) {
+      let result = input;
+      for (let i = 0; i < count; i++) {
+        result = transform(result);
+      }
+      return result;
+    }
+
+    const problems = [
+      {
+        input: "EDCAB",
+        choices: ["DABEC", "CBEAB", "EDAAB", "EDCAB"],
+        correct: "B"
+      },
+      {
+        input: "CBEDA",
+        choices: ["ECBAD", "CABDE", "DBAEC", "CBEDA"],
+        correct: "A"
+      },
+      {
+        input: "BADEC",
+        choices: ["ADECB", "CEADB", "BADEC", "ECDAB"],
+        correct: "C"
+      }
+    ];
+
+    function pickRandomProblem() {
+      const randIndex = Math.floor(Math.random() * problems.length);
+      const problem = problems[randIndex];
+      document.getElementById('questionInput').textContent = problem.input;
+      document.getElementById('choiceA').textContent = problem.choices[0];
+      document.getElementById('choiceB').textContent = problem.choices[1];
+      document.getElementById('choiceC').textContent = problem.choices[2];
+      document.getElementById('choiceD').textContent = problem.choices[3];
+
+      const correctOutput = repeatTransform(problem.input, 5);
+      const correctIndex = problem.choices.indexOf(correctOutput);
+      currentCorrectAnswer = ['A', 'B', 'C', 'D'][correctIndex];
+
+      document.querySelectorAll('input[name="answer"]').forEach(el => el.checked = false);
+      document.getElementById('resultMessage').textContent = "";
+      document.getElementById('retryBtn').style.display = 'none';
+    }
+
+    function startProblem() {
+      const select = document.getElementById('timeSelect');
+      timeLeft = parseInt(select.value);
+      document.getElementById('timer').textContent = `남은 시간: ${timeLeft}초`;
+      clearInterval(timerInterval);
+      document.getElementById('retryBtn').style.display = 'none';
+
+      timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          document.getElementById('timer').textContent = `남은 시간: ${timeLeft}초`;
+        } else {
+          clearInterval(timerInterval);
+          document.getElementById('timeoutPopup').style.display = 'block';
+        }
+      }, 1000);
+    }
+
+    function retry() {
+      document.getElementById('timeoutPopup').style.display = 'none';
+      clearInterval(timerInterval);
+      document.getElementById('timer').textContent = '';
+      document.getElementById('resultMessage').textContent = '';
+      pickRandomProblem();
+    }
+
+    function submitAnswer() {
+      const selected = document.querySelector('input[name="answer"]:checked');
+      const result = document.getElementById('resultMessage');
+      if (!selected) {
+        result.style.color = 'red';
+        result.textContent = "⚠ 정답을 선택해주세요.";
+        return;
+      }
+      if (selected.value === currentCorrectAnswer) {
+        result.style.color = 'green';
+        result.textContent = "✅ 정답입니다!";
+        clearInterval(timerInterval);
+        document.getElementById('retryBtn').style.display = 'inline-block';
+      } else {
+        result.style.color = 'red';
+        result.textContent = "❌ 오답입니다.";
+      }
+    }
+
+    // 초기 문제 설정
+    pickRandomProblem();
+  </script>
+</body>
+</html>
