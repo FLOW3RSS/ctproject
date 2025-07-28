@@ -27,24 +27,26 @@
 
   <h3>4. 규칙 예시:</h3>
   <ul>
-    <li>예시1: 입력: ABCDE → 결과: CCEEB</li>
-    <li>예시2: 입력: CCEEB → 결과: EDBAD</li>
-    <li>예시3: 입력: EEAAC → 결과: BACBE</li>
+    <li>예시1: 입력: BADEC → 1회 변환: DBAAE</li>
+    <li>예시2: 입력: DBAAE → 1회 변환: ACCBB</li>
   </ul>
 
   <div class="problem-box">
     <h3>5. 문제:</h3>
-    <p id="questionText">비버는 문자를 바꿀 때, 위치(1번, 2번, 3번...)가 홀수인지 짝수인지에 따라 다른 처리를 한다고 했습니다.<br>
-    예시들을 분석한 후, 비버가 문자 <span id="questionInput">EDCAB</span>을 위 규칙에 따라 5회 반복 변환하면 최종 결과는 무엇일까요?</p>
+    <p>비버는 문자를 바꿀 때, 위치(1번, 2번, 3번...)가 홀수인지 짝수인지에 따라 다른 처리를 한다고 했습니다.<br>
+    예시들을 분석한 후, 비버가 문자 <span id="questionInput">BADEC</span>을 위 규칙에 따라 <strong><span id="repeatDisplay">5</span></strong>회 반복 변환하면 최종 결과는 무엇일까요?</p>
+
+    <label for="repeatCount">🔁 변환 횟수:</label>
+    <input type="number" id="repeatCount" value="5" min="1" max="20" style="width: 60px;" onchange="updateRepeatDisplay()">
 
     <div class="choices">
-      <label><input type="radio" name="answer" value="A"> A. <span id="choiceA">DABEC</span></label>
-      <label><input type="radio" name="answer" value="B"> B. <span id="choiceB">CBEAB</span></label>
-      <label><input type="radio" name="answer" value="C"> C. <span id="choiceC">EDAAB</span></label>
-      <label><input type="radio" name="answer" value="D"> D. <span id="choiceD">EDCAB</span></label>
+      <label><input type="radio" name="answer" value="A"> A. <span id="choiceA">---</span></label>
+      <label><input type="radio" name="answer" value="B"> B. <span id="choiceB">---</span></label>
+      <label><input type="radio" name="answer" value="C"> C. <span id="choiceC">---</span></label>
+      <label><input type="radio" name="answer" value="D"> D. <span id="choiceD">---</span></label>
     </div>
 
-    <label>시간 설정:
+    <label>⏱ 시간 설정:
       <select id="timeSelect">
         <option value="30">30초</option>
         <option value="60">1분</option>
@@ -66,58 +68,61 @@
 
   <script>
     let timerInterval;
-    let currentCorrectAnswer = "B";
+    let currentCorrectAnswer = "A";
     let timeLeft = 0;
 
-    const alphabet = ['A', 'B', 'C', 'D', 'E'];
     const charToNum = { A: 0, B: 1, C: 2, D: 3, E: 4 };
     const numToChar = ['A', 'B', 'C', 'D', 'E'];
 
-    function transform(word) {
-      let nums = [...word].map(c => (charToNum[c] + 2) % 5);
-      [0, 2, 4].forEach(i => nums[i] = (nums[i] + 2) % 5);
+    // ✅ 정확한 암호 규칙: +1, 홀수 자리만 다시 +1 (총 +2)
+    function correctTransform(word) {
+      let nums = [...word].map(c => (charToNum[c] + 1) % 5); // Step 1: 전체 +1
+      [0, 2, 4].forEach(i => nums[i] = (nums[i] + 1) % 5);     // Step 2: 홀수 자리만 추가 +1
       return nums.map(n => numToChar[n]).join('');
     }
 
     function repeatTransform(input, count) {
       let result = input;
       for (let i = 0; i < count; i++) {
-        result = transform(result);
+        result = correctTransform(result);
       }
       return result;
     }
 
-    const problems = [
-      {
-        input: "EDCAB",
-        choices: ["DABEC", "CBEAB", "EDAAB", "EDCAB"],
-        correct: "B"
-      },
-      {
-        input: "CBEDA",
-        choices: ["ECBAD", "CABDE", "DBAEC", "CBEDA"],
-        correct: "A"
-      },
-      {
-        input: "BADEC",
-        choices: ["ADECB", "CEADB", "BADEC", "ECDAB"],
-        correct: "C"
+    function generateFakeChoices(correctOutput, input, count = 3) {
+      const fakeChoices = new Set();
+      while (fakeChoices.size < count) {
+        const randRepeat = Math.floor(Math.random() * 10 + 1); // 1~10회 반복
+        const fake = repeatTransform(input, randRepeat);
+        if (fake !== correctOutput && !fakeChoices.has(fake)) {
+          fakeChoices.add(fake);
+        }
       }
-    ];
+      return Array.from(fakeChoices);
+    }
+
+    function updateRepeatDisplay() {
+      document.getElementById('repeatDisplay').textContent = document.getElementById('repeatCount').value;
+      pickRandomProblem();
+    }
 
     function pickRandomProblem() {
-      const randIndex = Math.floor(Math.random() * problems.length);
-      const problem = problems[randIndex];
-      document.getElementById('questionInput').textContent = problem.input;
-      document.getElementById('choiceA').textContent = problem.choices[0];
-      document.getElementById('choiceB').textContent = problem.choices[1];
-      document.getElementById('choiceC').textContent = problem.choices[2];
-      document.getElementById('choiceD').textContent = problem.choices[3];
+      const input = "BADEC";
+      const repeatCount = parseInt(document.getElementById('repeatCount').value);
+      const correctOutput = repeatTransform(input, repeatCount);
 
-      const correctOutput = repeatTransform(problem.input, 5);
-      const correctIndex = problem.choices.indexOf(correctOutput);
-      currentCorrectAnswer = ['A', 'B', 'C', 'D'][correctIndex];
+      const fakeChoices = generateFakeChoices(correctOutput, input);
+      const correctIndex = Math.floor(Math.random() * 4);
+      fakeChoices.splice(correctIndex, 0, correctOutput); // 정답 삽입
 
+      const choiceSpans = ['choiceA', 'choiceB', 'choiceC', 'choiceD'];
+      const answerLetters = ['A', 'B', 'C', 'D'];
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(choiceSpans[i]).textContent = fakeChoices[i];
+      }
+      currentCorrectAnswer = answerLetters[correctIndex];
+
+      document.getElementById('questionInput').textContent = input;
       document.querySelectorAll('input[name="answer"]').forEach(el => el.checked = false);
       document.getElementById('resultMessage').textContent = "";
       document.getElementById('retryBtn').style.display = 'none';
@@ -168,7 +173,7 @@
       }
     }
 
-    // 초기 문제 설정
+    // 초기 실행
     pickRandomProblem();
   </script>
 </body>
