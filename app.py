@@ -1,5 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components #htmlviewer로 대체해도 된다
+st.set_page_config(layout='wide', page_title = 'Double secret rule!!!')
 # Title Msg#1
 st.title("This is JS Webapp!!")
 
