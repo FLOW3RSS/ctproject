@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>카피바라의 경로 탐색</title>
+  <style>
+    body { font-family: 'Arial'; padding: 20px; line-height: 1.6; background-color: #f2f9ff; }
+    h1, h2 { color: #003366; }
+    .section { margin-bottom: 20px; }
+    .problem-box { border: 2px solid #3399cc; background: #e0f7ff; padding: 15px; }
+    #timer { font-weight: bold; color: red; font-size: 18px; }
+    .grid { display: grid; grid-gap: 4px; margin-top: 15px; }
+    .cell { width: 40px; height: 40px; background: #fff; border: 1px solid #ccc; text-align: center; line-height: 40px; position: relative; }
+    .danger { background: #ffcdd2; }
+    .start { background: #c8e6c9; font-weight: bold; color: green; }
+    .end { background: #bbdefb; font-weight: bold; color: blue; }
+    .path { background: #ffeb3b; }
+    .btn { padding: 8px 16px; background: #006699; color: white; border: none; cursor: pointer; margin-right: 10px; }
+    .btn:disabled { background: gray; cursor: not-allowed; }
+    .popup { display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #888; padding: 30px; z-index: 999; text-align: center; }
+    .popup button { margin-top: 10px; }
+    .options button { margin: 5px; }
+    #equationDisplay { margin-top: 10px; font-weight: bold; color: #003366; }
+    #progressBarContainer { height: 10px; background: #ddd; margin-top: 10px; width: 100%; }
+    #progressBar { height: 10px; background: #f44336; width: 100%; transition: width 1s linear; }
+  </style>
+</head>
+<body>
+  <h1>카피바라의 경로 탐색: 안전한 길을 찾아서</h1>
+  <h2>대상 및 교과: 고1 공통수학2(도형의 방정식), 고2 확률과통계(순열)</h2>
+
+  <div class="section">
+    <strong>지문:</strong>
+    <p>카피바라는 N×N 격자 위에서 (0,0) 지점에서 출발하여 (N-1,N-1) 지점까지 도달하려 합니다. 단, 한 번에 오른쪽 또는 위쪽으로만 움직이며, 반드시 <strong>최단 경로</strong>로만 이동합니다. ax + by = c 형태의 직선 위에 있는 칸은 위험구역으로 지나갈 수 없습니다.</p>
+  </div>
+
+  <div class="section">
+    <strong>규칙:</strong>
+    <ul>
+      <li>한 번에 오른쪽(→) 또는 위쪽(↑)으로 한 칸 이동할 수 있습니다.</li>
+      <li>ax + by = c 형태로 주어진 위험구역 위의 칸은 통과할 수 없습니다. 직선의 방정식에서 (정수, 정수)만 통과 불가지역이 됩니다.</li>
+      <li>출발점 (0,0)과 도착점 (N-1,N-1)은 항상 안전지대입니다.</li>
+      <li>카피바라는 <strong>최단 경로</strong>만을 탐색합니다.</li>
+    </ul>
+  </div>
+
+  <div class="section problem-box">
+    <label for="gridSize">문제: </label>
+    <select id="gridSize">
+      <option value="5">격자 크기: 5x5</option>
+      <option value="6">격자 크기: 6x6</option>
+      <option value="7">격자 크기: 7x7</option>
+      <option value="8">격자 크기: 8x8</option>
+    </select>
+    <label for="timeLimit">시간 설정: </label>
+    <select id="timeLimit">
+      <option value="30">30초</option>
+      <option value="60">1분</option>
+      <option value="90">1분 30초</option>
+      <option value="120">2분</option>
+      <option value="150">2분 30초</option>
+      <option value="180">3분</option>
+      <option value="210">3분 30초</option>
+      <option value="240">4분</option>
+    </select>
+    <button class="btn" id="startBtn">문제 풀기</button>
+    <span id="timer"></span>
+    <div id="progressBarContainer"><div id="progressBar"></div></div>
+  </div>
+
+  <div id="equationDisplay"></div>
+  <div id="options" class="options"></div>
+  <div id="grid" class="grid"></div>
+  <div style="margin-top: 10px">
+    <button class="btn" id="checkAnswerBtn" disabled>답 확인하기</button>
+  </div>
+
+  <div id="popup" class="popup">
+    <p id="popupText"></p>
+    <button onclick="location.reload()">다시 도전하기</button>
+  </div>
+
+  <script>
+    let gridSize = 5;
+    let dangerFunc = () => false;
+    let correctAnswer = 0;
+    let timer, remaining, total;
+
+    const grid = document.getElementById("grid");
+    const equationDisplay = document.getElementById("equationDisplay");
+    const optionsDiv = document.getElementById("options");
+    const checkBtn = document.getElementById("checkAnswerBtn");
+    const timerSpan = document.getElementById("timer");
+    const progressBar = document.getElementById("progressBar");
+
+    document.getElementById("startBtn").onclick = startQuiz;
+    checkBtn.onclick = showPaths;
+
+    function generateDangerLine(n) {
+      let a = Math.floor(Math.random() * 3) + 1;
+      let b = -1 * (Math.floor(Math.random() * 3) + 1);
+      let maxXY = n - 1;
+      let c;
+      let tryCount = 0;
+      do {
+        c = Math.floor(Math.random() * (a * maxXY + b * maxXY + 1));
+        dangerFunc = (x, y) => a * x + b * y === c && !(x === 0 && y === 0) && !(x === n - 1 && y === n - 1);
+        correctAnswer = countPaths(n);
+        tryCount++;
+      } while (correctAnswer === 0 && tryCount < 100);
+
+      equationDisplay.innerText = `위험 지역 직선 방정식: ${a}x + (${b})y = ${c}`;
+    }
+
+    function drawGrid(n) {
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `repeat(${n}, 40px)`;
+      for (let y = n - 1; y >= 0; y--) {
+        for (let x = 0; x < n; x++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          if (dangerFunc(x, y)) cell.classList.add("danger");
+          if (x === 0 && y === 0) cell.classList.add("start");
+          if (x === n - 1 && y === n - 1) cell.classList.add("end");
+          cell.id = `cell-${x}-${y}`;
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    function countPaths(n) {
+      const dp = Array.from({ length: n }, () => Array(n).fill(0));
+      dp[0][0] = 1;
+      for (let x = 0; x < n; x++) {
+        for (let y = 0; y < n; y++) {
+          if (dangerFunc(x, y)) continue;
+          if (x > 0) dp[x][y] += dp[x - 1][y];
+          if (y > 0) dp[x][y] += dp[x][y - 1];
+        }
+      }
+      return dp[n - 1][n - 1];
+    }
+
+    function generateAnswers(answer) {
+      let options = new Set([answer]);
+      while (options.size < 4) {
+        const val = answer + Math.floor(Math.random() * 6 - 3);
+        if (val > 0) options.add(val);
+      }
+      options = Array.from(options).sort((a, b) => a - b);
+      optionsDiv.innerHTML = options.map((v, i) => `<button class='btn' onclick='checkAnswer(${v})'>${String.fromCharCode(65+i)}. ${v}</button>`).join('');
+    }
+
+    function startQuiz() {
+      gridSize = parseInt(document.getElementById("gridSize").value);
+      generateDangerLine(gridSize);
+      drawGrid(gridSize);
+      generateAnswers(correctAnswer);
+      checkBtn.disabled = true;
+      total = remaining = parseInt(document.getElementById("timeLimit").value);
+      clearInterval(timer);
+      timer = setInterval(() => {
+        remaining--;
+        timerSpan.textContent = `⏱ 남은 시간: ${remaining}초`;
+        progressBar.style.width = `${(remaining / total) * 100}%`;
+        if (remaining <= 0) {
+          clearInterval(timer);
+          checkBtn.disabled = false;
+          document.getElementById("popupText").textContent = `시간 초과! 정답은 ${correctAnswer}개입니다.`;
+          document.getElementById("popup").style.display = "block";
+        }
+      }, 1000);
+    }
+
+    function checkAnswer(selected) {
+      if (selected === correctAnswer) {
+        document.getElementById("popupText").textContent = "✅ 정답입니다!";
+      } else {
+        document.getElementById("popupText").textContent = `❌ 오답입니다. 정답은 ${correctAnswer}개입니다.`;
+      }
+      document.getElementById("popup").style.display = "block";
+      checkBtn.disabled = false;
+    }
+
+    async function showPaths() {
+      checkBtn.disabled = true;
+      const visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+      async function dfs(x, y, path) {
+        if (x >= gridSize || y >= gridSize || dangerFunc(x, y) || visited[x][y]) return;
+        path.push([x, y]);
+        if (x === gridSize - 1 && y === gridSize - 1) {
+          for (const [px, py] of path) {
+            document.getElementById(`cell-${px}-${py}`).classList.add("path");
+            await new Promise(res => setTimeout(res, 100));
+          }
+          await new Promise(res => setTimeout(res, 300));
+          for (const [px, py] of path) {
+            document.getElementById(`cell-${px}-${py}`).classList.remove("path");
+          }
+        } else {
+          visited[x][y] = true;
+          await dfs(x + 1, y, path);
+          await dfs(x, y + 1, path);
+          visited[x][y] = false;
+        }
+        path.pop();
+      }
+      await dfs(0, 0, []);
+      checkBtn.disabled = false;
+    }
+
+    window.checkAnswer = checkAnswer;
+  </script>
+</body>
+</html>
