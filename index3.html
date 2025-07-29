@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>비버챌린지: AI 우산 예측기</title>
+  <style>
+    body { font-family: 'Arial'; background: #f2f9ff; padding: 20px; line-height: 1.6; }
+    h1, h2 { color: #003366; }
+    .section { margin-bottom: 18px; }
+    .problem-box { border: 2px solid #3399cc; background: #e0f7ff; padding: 16px; margin-bottom: 20px;}
+    label { font-weight: bold; }
+    .btn { padding: 8px 16px; background: #007acc; color: white; border: none; cursor: pointer; margin: 6px 0 0 0; border-radius: 6px; }
+    .btn:disabled { background: #999; cursor: not-allowed;}
+    .result { margin-top: 12px; padding: 10px; font-weight: bold; border-radius: 8px; }
+    .필수 { background: #ffcdd2; color: #b71c1c; }
+    .권장 { background: #fff9c4; color: #827717; }
+    .선택 { background: #c8e6c9; color: #1b5e20; }
+    #map { height: 270px; margin-bottom: 16px; }
+    .chart-switch { margin-bottom: 7px; }
+    .chart-switch button { padding: 7px 20px; border-radius: 7px; margin-right: 7px; border: none; background: #e3e7f7; color: #234; font-weight: bold; cursor: pointer;}
+    .chart-switch .selected { background: #1976d2; color: white;}
+    canvas { margin-top: 7px; background: white; border: 1px solid #ccc; }
+    .qbox { margin-top: 28px; border: 2px solid #8eb2ff; background: #eef4fd; border-radius: 10px; padding: 17px;}
+    .qtitle { font-weight:bold; color: #0c2461; font-size: 20px; margin-bottom: 12px;}
+    .qdesc { color:#3e4b77; margin-bottom: 9px; font-size:16px;}
+    .qrule { background: #f7faff; border-left: 4px solid #1976d2; padding: 7px 12px; margin: 8px 0 15px 0; font-size:15px;}
+    .choices button { margin: 7px; padding: 9px 23px; font-weight: bold; border-radius: 7px;}
+    .ansMsg { margin-top: 10px; font-weight: bold;}
+    .progress-container { height: 11px; background: #eee; margin-top: 13px; border-radius: 7px; overflow: hidden;}
+    .progress-bar { height: 11px; background: #1976d2; width: 100%; transition: width 1s linear;}
+    .timer-row { font-size: 17px; color: #30306a; font-weight:bold; margin: 11px 0 8px 0;}
+    select { font-size: 17px; margin-left: 9px; padding: 3px 14px; border-radius: 7px; border: 1.5px solid #aaa;}
+    .choice-tbl { border-collapse: collapse; width: 380px; margin: 13px 0 7px 0;}
+    .choice-tbl th, .choice-tbl td { border: 1px solid #ccc; padding: 4px 10px; text-align:center; }
+    .choice-tbl th { background: #c8d9fc; }
+    .not-started { opacity: 0.3; pointer-events: none;}
+    .started { opacity: 1; pointer-events: auto;}
+    .popup { display: none; position: fixed; top: 36%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #3399cc; border-radius:14px; padding: 34px 45px; z-index: 999; text-align: center; font-size: 19px;}
+    .popup button { margin-top: 18px; padding: 10px 26px; border-radius: 7px; font-size: 17px;}
+    .explain { margin: 9px 0 0 0; color: #2941a5; font-size: 16px; }
+    .mae-exp { color: #1976d2; font-size:15px; margin: 10px 0 0 0;}
+    .warn { color:#b71c1c; background: #fff3e0; border-radius:7px; margin:9px 0 0 0; padding:6px 12px; display:inline-block;}
+    .sol { background:#e9f5ff; border-radius: 7px; color:#0d47a1; padding:12px 14px; margin:12px 0 7px 0; font-size:15px;}
+    .done-box { text-align:center; margin:55px 0 44px 0; padding:33px 8px 24px 8px; background:#e3f4fa; border-radius:18px; border:2px solid #2980b9; color:#17406a; font-size:23px;}
+    .hide { display:none !important;}
+    .show { display:block !important;}
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+  <h1>🦫 비버챌린지: AI 우산 예측기</h1>
+  <h2>대상 및 교과: 고1 수학(함수, 데이터 해석), 고2 통계·CT(문제분해/추상화)</h2>
+  <div class="section">
+    <strong>지문:</strong>
+    <p>
+      사용자는 <b>AI 우산 예측기</b>를 통해 위치의 오늘/5일 날씨 데이터를 입력합니다.<br>
+      <b>AI는 확률 P = w₁×R + w₂×H + w₃×W + w₄×T (가중치×각 변수의 값)로 예측</b>하여, <b>P ≥ 70: 필수, 50≤P&lt;70: 권장, P&lt;50: 선택</b>으로 분류합니다.<br>
+      (여기서 R=강수확률, H=습도, W=풍속, T=기온, w₁~w₄는 각 변수의 가중치)
+    </p>
+  </div>
+  <div class="section">
+    <strong>규칙:</strong>
+    <ul>
+      <li>위도·경도를 입력하거나 지도에서 클릭해 위치를 지정할 수 있습니다.</li>
+      <li>가중치(0~1)를 자유롭게 설정할 수 있습니다.</li>
+      <li>예측 버튼을 누르면 <b>AI가 우산 휴대 필요성(필수/권장/선택)</b>을 예측합니다.</li>
+      <li>5일 예측은 AI 예측치와 실제 강수확률을 그래프로 비교, <b>정확도(MAE)</b>도 확인 가능합니다.</li>
+    </ul>
+  </div>
+  <div class="problem-box">
+    <div id="map"></div>
+    <div>
+      <label>📌 위도</label>
+      <input type="number" id="lat" value="37.5665" step="0.0001" />
+      <label>📌 경도</label>
+      <input type="number" id="lon" value="126.9780" step="0.0001" />
+      <button class="btn" id="btnToday" onclick="showChartTab('today')">🌤 오늘 예측</button>
+      <button class="btn" id="btnForecast" onclick="showChartTab('forecast')">📆 5일 예측</button>
+    </div>
+    <div style="margin-top: 14px">
+      <h3>🧪 가중치 설정 (0~1, 합이 1)</h3>
+      <label>강수확률:</label><input type="number" id="w_rain" value="0.5" step="0.1" min="0" max="1" style="width:60px;">
+      <label>습도:</label><input type="number" id="w_humidity" value="0.2" step="0.1" min="0" max="1" style="width:60px;">
+      <label>풍속:</label><input type="number" id="w_wind" value="0.2" step="0.1" min="0" max="1" style="width:60px;">
+      <label>기온:</label><input type="number" id="w_temp" value="0.1" step="0.1" min="0" max="1" style="width:60px;">
+      <span id="weightWarn" class="warn" style="display:none"></span>
+    </div>
+    <div>
+      <div id="weatherInfo"></div>
+      <div id="result" class="result"></div>
+    </div>
+    <div class="chart-switch">
+      <button id="todayTab" onclick="showChartTab('today')" class="selected">오늘 예측</button>
+      <button id="forecastTab" onclick="showChartTab('forecast')">5일 예측</button>
+    </div>
+    <canvas id="chart1" width="400" height="200" style="display:"></canvas>
+    <canvas id="chart5" width="600" height="300" style="display:none"></canvas>
+  </div>
+
+  <!-- ========== 문제풀이 설정/타이머/팝업 ========== -->
+  <div class="problem-box" id="settingBox">
+    <label>⌛ 문제 풀이 시간 선택: </label>
+    <select id="timeSel">
+      <option value="30">30초</option>
+      <option value="60" selected>1분</option>
+      <option value="90">1분 30초</option>
+      <option value="120">2분</option>
+    </select>
+    <button class="btn" onclick="resetQ1();resetQ2();startQuiz()">문제 풀기 시작</button>
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="timer-row" id="timerRow" style="display:none;">⏱ 남은 시간: <span id="timer">--</span></div>
+  </div>
+
+  <div class="qbox not-started" id="q1box">
+    <div class="qtitle">문제 1. [비버챌린지] AI 우산 예측 공식의 분류 결과는?</div>
+    <div class="qdesc">  
+      <b>카피바라</b>는 날씨 데이터를 바탕으로 AI가 우산이 '필수', '권장', '선택'인지 예측하는 알고리즘을 연구합니다.<br>
+      <span style="font-size:16px;">아래 값과 보기 중에서 <b>P = w₁×R + w₂×H + w₃×W + w₄×T</b> 계산 결과에 따라<br>
+      '우산 필수'에 해당하는 <b>단 하나의 조합</b>을 골라보세요.</span>
+    </div>
+    <div class="qrule">
+      <b>규칙:</b><br>
+      1. 입력값: <span id="q1-input"></span><br>
+      2. 확률식: <b>P = w₁×R + w₂×H + w₃×W + w₄×T</b><br>
+      3. 분류: P ≥ 70 → 우산 필수<br>
+           50 ≤ P &lt; 70 → 우산 권장<br>
+           P &lt; 50 → 우산 선택
+    </div>
+    <table class="choice-tbl" id="q1-tbl"></table>
+    <div class="choices" id="q1-choice"></div>
+    <div class="ansMsg" id="ans1msg"></div>
+    <div id="q1sol"></div>
+  </div>
+
+  <!-- ================== 계산형 4지선다 문항2 =================== -->
+  <div class="qbox not-started" id="q2box">
+    <div class="qtitle">문제 2. [비버챌린지] 우산 예측 공식의 값(정수해) 구하기</div>
+    <div class="qdesc" id="q2desc"></div>
+    <div class="qrule" id="q2rule"></div>
+    <div class="choices" id="q2-choice"></div>
+    <div class="ansMsg" id="ans2msg"></div>
+    <div id="q2sol"></div>
+  </div>
+
+  <div id="doneBox" class="done-box hide">
+    <div>👏 모든 문제를 풀이하셨습니다!</div>
+    <button class="btn" onclick="retryQuiz()">문제 다시 풀기</button>
+  </div>
+  <script>
+    // ===== 지도, 차트, 예측 등 기존 기능 =====
+    let myMap;
+    window.onload = () => {
+      myMap = L.map('map').setView([37.5665, 126.9780], 7);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(myMap);
+      let marker;
+      myMap.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+        document.getElementById('lat').value = lat.toFixed(4);
+        document.getElementById('lon').value = lng.toFixed(4);
+        if (marker) myMap.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(myMap);
+      });
+      weightInputs.forEach(input => input.addEventListener('input', weightCheck));
+      weightCheck();
+    };
+
+    // 오늘/5일 예측 그래프 탭 스위치
+    function showChartTab(tab) {
+      if(weightCheck()===false) return;
+      document.getElementById('todayTab').classList.remove('selected');
+      document.getElementById('forecastTab').classList.remove('selected');
+      if(tab==='today') {
+        document.getElementById('todayTab').classList.add('selected');
+        document.getElementById('chart1').style.display = '';
+        document.getElementById('chart5').style.display = 'none';
+        fetchWeather();
+      } else {
+        document.getElementById('forecastTab').classList.add('selected');
+        document.getElementById('chart1').style.display = 'none';
+        document.getElementById('chart5').style.display = '';
+        fetchForecast();
+      }
+    }
+
+    // 가중치 입력 체크
+    const weightInputs = [
+      document.getElementById('w_rain'),
+      document.getElementById('w_humidity'),
+      document.getElementById('w_wind'),
+      document.getElementById('w_temp')
+    ];
+    function weightCheck() {
+      let sum = 0;
+      for(let i=0; i<weightInputs.length; i++) sum += parseFloat(weightInputs[i].value) || 0;
+      if(sum > 1.00001) {
+        document.getElementById('weightWarn').innerText = "가중치 합계가 1을 넘었습니다.";
+        document.getElementById('weightWarn').style.display = '';
+        document.getElementById('btnToday').disabled = true;
+        document.getElementById('btnForecast').disabled = true;
+        return false;
+      } else {
+        document.getElementById('weightWarn').innerText = "";
+        document.getElementById('weightWarn').style.display = 'none';
+        document.getElementById('btnToday').disabled = false;
+        document.getElementById('btnForecast').disabled = false;
+        return true;
+      }
+    }
+
+    // 오늘 예측
+    async function fetchWeather() {
+      if(!weightCheck()) return;
+      const lat = document.getElementById("lat").value;
+      const lon = document.getElementById("lon").value;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&current_weather=true&hourly=precipitation_probability,relative_humidity_2m`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const temp = data.current_weather.temperature;
+      const wind = data.current_weather.windspeed;
+      const nowTime = data.current_weather.time;
+      const idx = data.hourly.time.indexOf(nowTime);
+      const humidity = data.hourly.relative_humidity_2m[idx] || 0;
+      const rain = data.hourly.precipitation_probability[idx] || 0;
+
+      document.getElementById("weatherInfo").innerText =
+        `🌡️ 기온: ${temp}℃ | 💧 습도: ${humidity}% | 💨 풍속: ${wind}m/s | 🌧️ 강수확률: ${rain}%`;
+
+      predict(temp, humidity, wind, rain);
+    }
+
+    function predict(temp, humidity, wind, rain) {
+      const wr = parseFloat(document.getElementById("w_rain").value);
+      const wh = parseFloat(document.getElementById("w_humidity").value);
+      const ww = parseFloat(document.getElementById("w_wind").value);
+      const wt = parseFloat(document.getElementById("w_temp").value);
+
+      const P = wr * rain + wh * humidity + ww * wind + wt * temp;
+      let msg = "", level = "";
+      if (P >= 70) { msg = `우산 필수! (예측 확률: ${P.toFixed(1)}%)`; level = "필수"; }
+      else if (P >= 50) { msg = `우산 권장! (예측 확률: ${P.toFixed(1)}%)`; level = "권장"; }
+      else { msg = `우산 선택 가능 (예측 확률: ${P.toFixed(1)}%)`; level = "선택"; }
+
+      const result = document.getElementById("result");
+      result.innerHTML = msg;
+      result.className = `result ${level}`;
+
+      drawChart1(P, rain);
+    }
+
+    function drawChart1(predict, actual) {
+      const ctx = document.getElementById("chart1").getContext("2d");
+      if (window.chart1 instanceof Chart) window.chart1.destroy();
+      window.chart1 = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['AI 예측 확률', '실제 강수확률'],
+          datasets: [{
+            label: '1일 예측 비교',
+            data: [Number(predict.toFixed(1)), Number(actual.toFixed(1))],
+            backgroundColor: ['#2196f3', '#f44336']
+          }]
+        },
+        options: {
+          plugins: {
+            title: { display: true, text: '🌂 오늘의 예측 vs 실제' },
+            datalabels: {
+              anchor: 'end',
+              align: 'end',
+              formatter: (val) => val + '%',
+              font: { weight: 'bold' }
+            }
+          },
+          scales: { y: { beginAtZero: true, max: 100 } }
+        },
+        plugins: [ChartDataLabels]
+      });
+    }
+
+    async function fetchForecast() {
+      if(!weightCheck()) return;
+      const lat = document.getElementById("lat").value;
+      const lon = document.getElementById("lon").value;
+      const today = new Date().toISOString().split('T')[0];
+      const future = new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0];
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&daily=temperature_2m_max,relative_humidity_2m_max,windspeed_10m_max,precipitation_probability_max` +
+        `&timezone=auto&start_date=${today}&end_date=${future}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const dates = data.daily.time;
+      const T = data.daily.temperature_2m_max;
+      const H = data.daily.relative_humidity_2m_max;
+      const W = data.daily.windspeed_10m_max;
+      const R = data.daily.precipitation_probability_max;
+
+      const wr = parseFloat(document.getElementById("w_rain").value);
+      const wh = parseFloat(document.getElementById("w_humidity").value);
+      const ww = parseFloat(document.getElementById("w_wind").value);
+      const wt = parseFloat(document.getElementById("w_temp").value);
+
+      const predicted = dates.map((_, i) => wr * R[i] + wh * H[i] + ww * W[i] + wt * T[i]);
+
+      drawChart5(dates, predicted, R);
+      const box = document.getElementById("result");
+      box.innerHTML = "";
+      evaluateAccuracy(predicted, R);
+    }
+
+    function drawChart5(dates, predicted, actual) {
+      const ctx = document.getElementById("chart5").getContext("2d");
+      if (window.chart5 instanceof Chart) window.chart5.destroy();
+      window.chart5 = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: "AI 예측 확률",
+              data: predicted.map(x => Number(x.toFixed(1))),
+              borderColor: "#007bff",
+              fill: false
+            },
+            {
+              label: "실제 강수확률",
+              data: actual.map(x => Number(x)),
+              borderColor: "#dc3545",
+              fill: false
+            }
+          ]
+        },
+        options: {
+          plugins: {
+            title: { display: true, text: "📆 5일 예측 vs 실제 강수확률" },
+            datalabels: {
+              anchor: 'end',
+              align: 'top',
+              formatter: (val) => val + '%',
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100, ticks: { stepSize: 10 } }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    }
+
+    // 오직 MAE만 표기 + 설명
+    function evaluateAccuracy(predicted, actual) {
+      const n = predicted.length;
+      let sumAbsErr = 0;
+      for (let i = 0; i < n; i++) {
+        sumAbsErr += Math.abs(predicted[i] - actual[i]);
+      }
+      const mae = (sumAbsErr / n).toFixed(2);
+      const box = document.getElementById("result");
+      box.innerHTML += `<p class="mae-exp"><b>MAE</b>: ${mae}<br>
+        <span>※ MAE(평균절대오차, Mean Absolute Error):<br>
+        <b>실제값과 예측값의 차이(|예측-실제|)의 평균</b>을 의미.<br>
+        값이 0에 가까울수록 예측 정확도가 높음을 의미함.<br>
+        <b>계산식:</b> (|예측1-실제1| + |예측2-실제2| + ...)/개수</span></p>`;
+    }
+
+    // ================= 문제1 랜덤생성/풀이 =================
+    let q1 = {}, solved1=false, solved2=false;
+    function resetQ1() {
+      let ok = false, tryCnt=0, maxTry=50;
+      let R,H,W,T,weights,P,correctIdx;
+      while(!ok && tryCnt<maxTry) {
+        R = Math.floor(Math.random() * 31) + 70;
+        H = Math.floor(Math.random() * 21) + 70;
+        W = Math.floor(Math.random() * 6) + 2;
+        T = Math.floor(Math.random() * 6) + 25;
+        let idx = Math.floor(Math.random()*4);
+        let wSet = [
+          [0.7,0.1,0.1,0.1],
+          [0.3,0.3,0.2,0.2],
+          [0.1,0.3,0.4,0.2],
+          [0.1,0.1,0.4,0.4]
+        ];
+        weights = [];
+        for(let i=0;i<4;i++) weights.push(wSet[(i+idx)%4]);
+        P = [];
+        for(let i=0;i<4;i++) {
+          let w = weights[i];
+          P.push(w[0]*R + w[1]*H + w[2]*W + w[3]*T);
+        }
+        let nFil = 0, ansIdx=-1;
+        for(let i=0;i<4;i++) if(P[i]>=70) { nFil++; ansIdx=i; }
+        if(nFil===1 && ansIdx!==-1) { correctIdx=ansIdx; ok=true; break; }
+        tryCnt++;
+      }
+      if(!ok) {
+        R=80;H=80;W=7;T=27;
+        weights=[[0.7,0.1,0.1,0.1],[0.3,0.3,0.2,0.2],[0.1,0.3,0.4,0.2],[0.1,0.1,0.4,0.4]];
+        P = [0.7*R+0.1*H+0.1*W+0.1*T,0.3*R+0.3*H+0.2*W+0.2*T,0.1*R+0.3*H+0.4*W+0.2*T,0.1*R+0.1*H+0.4*W+0.4*T];
+        correctIdx=0;
+      }
+      q1.R=R; q1.H=H; q1.W=W; q1.T=T; q1.weights=weights; q1.P = P; q1.right = String.fromCharCode(65+correctIdx);
+      let tblHTML = `<tr>
+        <th>보기</th><th>w₁(Rain)</th><th>w₂(Humidity)</th><th>w₃(Wind)</th><th>w₄(Temp)</th>
+      </tr>`;
+      let choiceHTML = '';
+      for(let i=0; i<4; i++) {
+        let w = weights[i], label=String.fromCharCode(65+i);
+        tblHTML += `<tr>
+          <td>${label}</td><td>${w[0]}</td><td>${w[1]}</td><td>${w[2]}</td><td>${w[3]}</td>
+        </tr>`;
+        choiceHTML += `<button onclick="ans1('${label}')">${label}</button>`;
+      }
+      document.getElementById('q1-input').innerText = `R=${R}, H=${H}, W=${W}, T=${T}`;
+      document.getElementById('q1-tbl').innerHTML = tblHTML;
+      document.getElementById('q1-choice').innerHTML = choiceHTML;
+      document.getElementById('ans1msg').innerHTML = '';
+      document.getElementById('q1sol').innerHTML = '';
+      solved1 = false;
+      solved2 = false;
+      document.getElementById('q1box').classList.remove('hide');
+      document.getElementById('q2box').classList.remove('hide');
+      document.getElementById('doneBox').classList.add('hide');
+    }
+    function ans1(sel) {
+      if(solved1) return;
+      let idx = sel.charCodeAt(0)-65;
+      let w = q1.weights;
+      let calcstr = w.map((v,i)=>{
+        return `${String.fromCharCode(65+i)} : ${v[0]}×${q1.R} + ${v[1]}×${q1.H} + ${v[2]}×${q1.W} + ${v[3]}×${q1.T} = ${q1.P[i].toFixed(1)} → ${q1.P[i]>=70?'필수':q1.P[i]>=50?'권장':'선택'}`;
+      }).join('<br>');
+      let sol = `<div class="sol"><b>[풀이과정]</b><br>
+        1. 입력값과 각 보기의 가중치를 확률식에 대입<br>
+        2. 계산 결과 P가 70 이상인 보기를 찾음<br>
+        3. 오직 하나의 보기만 P≥70(필수)이므로 해당 보기가 정답<br><br>${calcstr}<br>
+        정답: ${q1.right} (P=${q1.P[q1.right.charCodeAt(0)-65].toFixed(1)})</div>`;
+      if(sel === q1.right) {
+        document.getElementById("ans1msg").innerHTML = "✅ 정답입니다!";
+      } else {
+        document.getElementById("ans1msg").innerHTML = `❌ 오답입니다. (정답: ${q1.right})`;
+      }
+      document.getElementById('q1sol').innerHTML = sol;
+      solved1=true;
+      checkFinish();
+    }
+
+    // =============== 계산형(정수해) 4지선다 문항2 ================
+    let q2 = {};
+    function resetQ2() {
+      // 변수: w1~w4, H,W,T는 고정, 4개 보기
+      let ok=false, tryCnt=0, ans=-1, w1,w2,w3,w4,H,W,T,Pmin,solR,choices=[];
+      while(!ok && tryCnt<200) {
+        w1 = (Math.random()*0.25+0.5).toFixed(2)*1;
+        w2 = (Math.random()*0.25+0.1).toFixed(2)*1;
+        w3 = (Math.random()*0.2+0.1).toFixed(2)*1;
+        w4 = +(1.0-w1-w2-w3).toFixed(2);
+        if(w4<0.05||w4>0.3) { tryCnt++; continue; }
+        H = Math.floor(Math.random()*16)+75; // 75~90
+        W = Math.floor(Math.random()*6)+3;   // 3~8
+        T = Math.floor(Math.random()*6)+25;  // 25~30
+        Pmin = w2*H + w3*W + w4*T;
+        solR = Math.round((70-Pmin)/w1);
+        if(solR<0 || solR>100 || Math.abs(w1*solR+Pmin-70)>0.95) { tryCnt++; continue; }
+        // 보기 랜덤 생성, 중복방지, 정답 보장
+        let used = new Set([solR]);
+        choices = [solR];
+        while(choices.length<4) {
+          let offset = Math.floor(Math.random()*9)+2; // 2~10
+          let sign = Math.random()<0.5?-1:1;
+          let v = solR + offset*sign;
+          if(v<0||v>100||used.has(v)) continue;
+          used.add(v);
+          choices.push(v);
+        }
+        // 보기 섞기, 정답 인덱스 구하기
+        for(let i=choices.length-1;i>0;i--){
+          let j=Math.floor(Math.random()*(i+1));
+          [choices[i],choices[j]]=[choices[j],choices[i]];
+        }
+        ans=choices.indexOf(solR);
+        ok=true;
+      }
+      // 렌더링
+      q2 = {w1,w2,w3,w4,H,W,T,Pmin,solR,choices,ans};
+      document.getElementById('q2desc').innerHTML = `우산 예측 공식 <b>P = w₁×R + w₂×H + w₃×W + w₄×T</b> (단, 0≤R≤100)에서<br>
+        w₁=${w1}, w₂=${w2}, w₃=${w3}, w₄=${w4}, H=${H}, W=${W}, T=${T}일 때,<br>
+        <b>우산 필수(P≥70)가 되려면 강수확률 R이 최소 몇 이상이어야 하는가?</b>`;
+      document.getElementById('q2rule').innerHTML = `
+        <b>규칙:</b><br>
+        1. 식에 모든 값을 대입해 풀 것<br>
+        2. 70 = w₁R + w₂H + w₃W + w₄T 이므로, R을 계산<br>
+        3. 보기 중 올바른 정수해를 고르세요.
+      `;
+      let btns = "";
+      for(let i=0;i<4;i++)
+        btns += `<button onclick="ans2(${i})">${q2.choices[i]}</button>`;
+      document.getElementById('q2-choice').innerHTML = btns;
+      document.getElementById('ans2msg').innerHTML = "";
+      document.getElementById('q2sol').innerHTML = "";
+      solved2 = false;
+    }
+    function ans2(idx) {
+      if(solved2) return;
+      let exp = `① 모든 상수 대입: 70 = (${q2.w1})R + (${q2.w2})×${q2.H} + (${q2.w3})×${q2.W} + (${q2.w4})×${q2.T}
+      <br>② ${q2.w1}R = 70 - [${q2.w2}×${q2.H} + ${q2.w3}×${q2.W} + ${q2.w4}×${q2.T}]
+      <br>③ R = (70 - (${q2.w2*q2.H}+${q2.w3*q2.W}+${q2.w4*q2.T}).toFixed(2)) / ${q2.w1} ≈ <b>${q2.solR}</b>
+      <br>④ 정답: <b>${q2.solR}</b> (강수확률 최소값)`;
+      if(idx===q2.ans) {
+        document.getElementById('ans2msg').innerHTML = "✅ 정답입니다!";
+      } else {
+        document.getElementById('ans2msg').innerHTML = `❌ 오답입니다. (정답: ${q2.solR})`;
+      }
+      document.getElementById('q2sol').innerHTML = `<div class="sol"><b>[풀이과정]</b><br>${exp}</div>`;
+      solved2 = true;
+      checkFinish();
+    }
+    function checkFinish() {
+      if(solved1 && solved2) {
+        setTimeout(()=>{
+          // box 숨기지 않고, not-started만 해제해놓고, "문제 다시 풀기" 활성화
+          document.getElementById('doneBox').classList.remove('hide');
+          document.getElementById('q1box').classList.remove('started'); // 클릭 불가
+          document.getElementById('q2box').classList.remove('started'); // 클릭 불가
+          document.getElementById('q1box').classList.add('not-started');
+          document.getElementById('q2box').classList.add('not-started');
+        }, 500);
+      }
+    }
+    // =================== 타이머/진행 등 ====================
+    let time=0, remain=0, interval=null;
+    function startQuiz(){
+      document.getElementById('settingBox').style.pointerEvents='none';
+      document.getElementById('settingBox').style.opacity='0.6';
+      document.getElementById('q1box').classList.remove('not-started','hide');
+      document.getElementById('q1box').classList.add('started');
+      document.getElementById('q2box').classList.remove('not-started','hide');
+      document.getElementById('q2box').classList.add('started');
+      document.getElementById('timerRow').style.display='';
+      time = Number(document.getElementById("timeSel").value);
+      remain = time;
+      document.getElementById("timer").innerText = remain;
+      document.getElementById("progressBar").style.width = "100%";
+      interval = setInterval(()=>{
+        remain--;
+        document.getElementById("timer").innerText = remain;
+        document.getElementById("progressBar").style.width = (remain/time*100) + "%";
+        if(remain<=0){
+          clearInterval(interval);
+          showTimeout();
+        }
+      }, 1000);
+    }
+    function showTimeout(){
+      document.getElementById('popupMsg').innerHTML = "⏰ 시간이 초과되었습니다!<br>아쉽지만 다시 도전해보세요.";
+      document.getElementById('popup').style.display = 'block';
+      document.getElementById('q1box').style.pointerEvents='none';
+      document.getElementById('q2box').style.pointerEvents='none';
+      document.getElementById('q1box').style.opacity='0.5';
+      document.getElementById('q2box').style.opacity='0.5';
+    }
+    function retryQuiz(){
+      location.reload();
+    }
+  </script>
+</body>
+</html>
