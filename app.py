@@ -45,7 +45,7 @@ with col1:
         components.html(html2, height=1000, scrolling=True)
         #htmlviewer.html(html, height=600)    
 
-    with st.expander('카피바라의 경로탐색'):
+    with st.expander('AI+X'):
         components.html(html2, height=1000, scrolling=True)
         #htmlviewer.html(html, height=600)            
     
