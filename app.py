@@ -34,7 +34,7 @@ with col1:
         st.video(url)
 
     with st.expander('Image Content..'):
-        Imagefilepath = './images/gpt.jpg'
+        Imagefilepath = 'gpt.jpg'
         st.image(Imagefilepath)
 
     with st.expander('카피바라의 이중암호 규칙'):
