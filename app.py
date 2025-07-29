@@ -24,6 +24,9 @@ with open('./index2.html', 'r', encoding = 'utf-8') as f2:
     html2 = f2.read()
     f2.close()    
 
+with open('./index3.html', 'r', encoding = 'utf-8') as f3:
+    html3 = f3.read()
+    f3.close()   
 
 # Box#1(4), Box#2(1)
 col1, col2 = st.columns((4,1))
@@ -46,7 +49,7 @@ with col1:
         #htmlviewer.html(html, height=600)    
 
     with st.expander('AI+X'):
-        components.html(html2, height=1000, scrolling=True)
+        components.html(html3, height=1000, scrolling=True)
         #htmlviewer.html(html, height=600)            
     
 with col2:
