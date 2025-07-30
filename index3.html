@@ -2,57 +2,69 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>카피바라 챌린지: AI 강수확률 기반 우산 예측기</title>
+  <title>비버챌린지: AI 강수확률 기반 우산 예측기</title>
   <style>
-    body { font-family: 'Arial'; background: #f2f9ff; padding: 20px; line-height: 1.6; }
+    body { font-family: 'Segoe UI', 'Arial'; background: #f2f9ff; padding: 20px; line-height: 1.68; }
     h1, h2 { color: #003366; }
-    .section { margin-bottom: 18px; }
-    .problem-box { border: 2px solid #3399cc; background: #e0f7ff; padding: 16px; margin-bottom: 20px;}
-    label { font-weight: bold; }
-    .btn { padding: 8px 16px; background: #007acc; color: white; border: none; cursor: pointer; margin: 6px 0 0 0; border-radius: 6px; }
-    .btn:disabled { background: #999; cursor: not-allowed;}
-    .result { margin-top: 12px; padding: 10px; font-weight: bold; border-radius: 8px; }
-    .필수 { background: #ffcdd2; color: #b71c1c; }
-    .권장 { background: #fff9c4; color: #827717; }
-    .선택 { background: #c8e6c9; color: #1b5e20; }
-    #map { height: 270px; margin-bottom: 16px; }
-    .chart-switch { margin-bottom: 7px; }
-    .chart-switch button { padding: 7px 20px; border-radius: 7px; margin-right: 7px; border: none; background: #e3e7f7; color: #234; font-weight: bold; cursor: pointer;}
+    h1 { font-size: 2.2rem; letter-spacing: 0.5px; }
+    h2 { font-size: 1.18rem; margin-bottom: 16px;}
+    .section { margin-bottom: 19px; }
+    .problem-box { border: 2.2px solid #3399cc; background: #e0f7ff; padding: 20px 16px 16px 16px; margin-bottom: 22px; border-radius: 13px;}
+    label { font-weight: bold; margin-right: 5px;}
+    .btn { padding: 8px 20px; background: #1976d2; color: white; border: none; cursor: pointer; margin: 6px 0 0 0; border-radius: 7px; font-weight: 500; letter-spacing: 0.5px; transition: background 0.2s;}
+    .btn:disabled { background: #b0b7c7; cursor: not-allowed;}
+    .btn:hover:not(:disabled) { background: #12519c;}
+    .result { margin-top: 13px; padding: 11px; font-weight: bold; border-radius: 8px; }
+    .필수 { background: #ffcdd2; color: #b71c1c; border-radius:4px; padding:0 4px;}
+    .권장 { background: #fff9c4; color: #827717; border-radius:4px; padding:0 4px;}
+    .선택 { background: #c8e6c9; color: #1b5e20; border-radius:4px; padding:0 4px;}
+    #map { height: 265px; margin-bottom: 15px; border-radius: 10px; box-shadow: 1px 2px 7px #bcd4e4;}
+    .chart-switch { margin-bottom: 8px; }
+    .chart-switch button { padding: 7px 20px; border-radius: 8px; margin-right: 7px; border: none; background: #e3e7f7; color: #234; font-weight: bold; cursor: pointer; transition: background 0.18s;}
     .chart-switch .selected { background: #1976d2; color: white;}
-    canvas { margin-top: 7px; background: white; border: 1px solid #ccc; }
-    .qbox { margin-top: 28px; border: 2px solid #8eb2ff; background: #eef4fd; border-radius: 10px; padding: 17px;}
-    .qtitle { font-weight:bold; color: #0c2461; font-size: 20px; margin-bottom: 12px;}
+    canvas { margin-top: 9px; background: white; border: 1px solid #ccc; border-radius:9px;}
+    .qbox { margin-top: 29px; border: 2px solid #8eb2ff; background: #eef4fd; border-radius: 13px; padding: 18px;}
+    .qtitle { font-weight:bold; color: #0c2461; font-size: 20px; margin-bottom: 11px;}
     .qdesc { color:#3e4b77; margin-bottom: 9px; font-size:16px;}
-    .qrule { background: #f7faff; border-left: 4px solid #1976d2; padding: 7px 12px; margin: 8px 0 15px 0; font-size:15px;}
-    .choices button { margin: 7px; padding: 9px 23px; font-weight: bold; border-radius: 7px;}
+    .qrule { background: #f7faff; border-left: 4px solid #1976d2; padding: 7px 12px; margin: 8px 0 14px 0; font-size:15px;}
+    .choices button { margin: 8px 4px 7px 4px; padding: 9px 24px; font-weight: bold; border-radius: 8px; font-size:1.04rem;}
     .ansMsg { margin-top: 10px; font-weight: bold;}
-    .progress-container { height: 11px; background: #eee; margin-top: 13px; border-radius: 7px; overflow: hidden;}
-    .progress-bar { height: 11px; background: #1976d2; width: 100%; transition: width 1s linear;}
-    .timer-row { font-size: 17px; color: #30306a; font-weight:bold; margin: 11px 0 8px 0;}
-    select { font-size: 17px; margin-left: 9px; padding: 3px 14px; border-radius: 7px; border: 1.5px solid #aaa;}
-    .choice-tbl { border-collapse: collapse; width: 380px; margin: 13px 0 7px 0;}
-    .choice-tbl th, .choice-tbl td { border: 1px solid #ccc; padding: 4px 10px; text-align:center; }
+    .progress-container { height: 12px; background: #e3e6ee; margin-top: 13px; border-radius: 8px; overflow: hidden;}
+    .progress-bar { height: 12px; background: linear-gradient(90deg, #1976d2 85%, #42a5f5 100%); width: 100%; transition: width 1s linear;}
+    .timer-row { font-size: 17px; color: #30306a; font-weight:bold; margin: 13px 0 8px 0;}
+    select { font-size: 17px; margin-left: 9px; padding: 4px 15px; border-radius: 7px; border: 1.7px solid #8eb2ff;}
+    .choice-tbl { border-collapse: collapse; width: 385px; margin: 13px 0 8px 0; border-radius:7px; overflow:hidden;}
+    .choice-tbl th, .choice-tbl td { border: 1px solid #b9d0f7; padding: 5px 11px; text-align:center; }
     .choice-tbl th { background: #c8d9fc; }
-    .not-started { opacity: 0.3; pointer-events: none;}
+    .not-started { opacity: 0.35; pointer-events: none;}
     .started { opacity: 1; pointer-events: auto;}
     .popup { display: none; position: fixed; top: 36%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #3399cc; border-radius:14px; padding: 34px 45px; z-index: 999; text-align: center; font-size: 19px;}
     .popup button { margin-top: 18px; padding: 10px 26px; border-radius: 7px; font-size: 17px;}
-    .explain { margin: 9px 0 0 0; color: #2941a5; font-size: 16px; }
+    .explain { margin: 10px 0 0 0; color: #2941a5; font-size: 16px; }
     .mae-exp { color: #1976d2; font-size:15px; margin: 10px 0 0 0;}
     .warn { color:#b71c1c; background: #fff3e0; border-radius:7px; margin:9px 0 0 0; padding:6px 12px; display:inline-block;}
     .sol { background:#e9f5ff; border-radius: 7px; color:#0d47a1; padding:12px 14px; margin:12px 0 7px 0; font-size:15px;}
-    .done-box { text-align:center; margin:55px 0 44px 0; padding:33px 8px 24px 8px; background:#e3f4fa; border-radius:18px; border:2px solid #2980b9; color:#17406a; font-size:23px;}
+    .done-box { text-align:center; margin:57px 0 46px 0; padding:36px 8px 26px 8px; background:#e3f4fa; border-radius:20px; border:2.3px solid #2980b9; color:#17406a; font-size:23px;}
     .hide { display:none !important;}
     .show { display:block !important;}
-    .compare-table { border-collapse: collapse; margin: 12px 0; font-size: 15px; }
-    .compare-table th, .compare-table td { border: 1px solid #bbc; padding: 5px 11px; text-align: center; }
+    .compare-table { border-collapse: collapse; margin: 13px 0; font-size: 15px; border-radius:8px; overflow:hidden;}
+    .compare-table th, .compare-table td { border: 1px solid #bbc; padding: 6px 12px; text-align: center; }
     .compare-table th { background: #e4ecff; }
-    .judge-box { margin: 10px 0 0 0; padding: 8px 15px; border: 1.5px solid #9ec7ff; border-radius: 10px; background: #f2f8ff;}
-    .ai-desc { margin: 8px 0 0 0; color: #186; font-size: 15px; }
-    .match-score { margin: 10px 0; font-size: 17px; font-weight: bold; }
+    .judge-box { margin: 12px 0 0 0; padding: 11px 18px; border: 2px solid #9ec7ff; border-radius: 13px; background: #f2f8ff;}
+    .ai-desc { margin: 11px 0 0 0; color: #186; font-size: 15px; line-height: 1.65;}
+    .match-score { margin: 12px 0; font-size: 17px; font-weight: bold; }
     .match-score.good { color: #008060; }
     .match-score.soso { color: #d2691e; }
     .match-score.bad { color: #b71c1c; }
+    #ctBox .judge-box { background:#fffde7; border:2px solid #ffd600; font-size: 1.05rem;}
+    #ctBox ul { margin:7px 0 9px 10px; padding-left: 14px;}
+    #ctStudentInput {font-family: 'Segoe UI', 'Arial'; font-size:1rem;}
+    @media (max-width:700px) {
+      .problem-box, .qbox {padding:10px;}
+      .choice-tbl {width:100%;}
+      .compare-table {font-size:14px;}
+      .ai-desc {font-size:13px;}
+    }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -60,14 +72,14 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
-  <h1>🦫 카피바라 챌린지: AI 강수확률 기반 우산 예측기</h1>
-  <h2>고1 수학(함수, 데이터 해석) + 고2 통계·CT(문제분해/추상화)</h2>
+  <h1>🦫 비버챌린지: AI 강수확률 기반 우산 예측기</h1>
+  <h2>고1 수학(함수·데이터 해석) + 고2 통계·CT(문제분해/추상화) 통합 실습</h2>
   <div class="section">
     <strong>지문:</strong>
     <p>
-      이 예측기는 <b>구름량(C: cloud cover), 습도(H), 풍속(W), 기온(T)</b>을 기반으로<br>
+      본 예측기는 <b>구름량(C), 습도(H), 풍속(W), 기온(T)</b>을 기반으로<br>
       <b>나의 가중치</b>와 <b>AI 회귀모델</b>이 각각 우산 휴대 필요성(필수/권장/선택)을 예측합니다.<br>
-      예측 공식: <b>P = w₁×C + w₂×H + w₃×W + w₄×T</b> (여기서 P=강수확률, w₁~w₄의 합은 1)<br>
+      예측 공식: <b>P = w₁×C + w₂×H + w₃×W + w₄×T</b> (P=강수확률, w₁~w₄의 합은 1)<br>
       (P≥70: 필수, 50≤P&lt;70: 권장, P&lt;50: 선택)
     </p>
   </div>
@@ -75,11 +87,11 @@
     <strong>활동 규칙:</strong>
     <ul>
       <li>지도 클릭 또는 위도·경도 입력 → 위치 지정</li>
-      <li>날짜 선택 (오늘/5일 중 하나, 달력으로 지정 가능)</li>
+      <li>날짜 선택 (오늘/5일 중 하나, 달력 가능)</li>
       <li>가중치(0~1, 합 1) 입력 (구름량/습도/풍속/기온)</li>
-      <li>예측 결과 : <b>내 가중치/AI모델/실제 강수확률 모두 그래프와 표로 비교</b></li>
-      <li>문제풀이: <b>둘 중 어느 쪽 예측이 더 실제와 가까웠는지, 일치여부 분석 문항 포함</b></li>
-      <li><b>AI 모델 설명:</b> 최근 20일 실제 데이터를 바탕으로 다중회귀(머신러닝)를 수행, 예측값과 실제값의 평균 오차까지 자동 보정해 실제와 매우 유사하게 만듭니다.</li>
+      <li>예측 결과: <b>내 가중치/AI모델/실제 강수확률 모두 그래프·표로 비교</b></li>
+      <li>문제풀이: <b>둘 중 어느 쪽 예측이 실제와 더 가까운지, CT 사고력 문항 포함</b></li>
+      <li><b>AI 모델 설명:</b> 최근 20일 실제 데이터로 다중회귀, 예측값과 실제값의 평균 오차까지 자동 보정해 실제와 매우 유사하게 만듭니다.</li>
     </ul>
   </div>
   <div class="problem-box">
@@ -92,8 +104,8 @@
       <label>📅 날짜 선택</label>
       <input type="date" id="selectedDate" />
     </div>
-    <div style="margin-top: 14px">
-      <h3>🧪 가중치 설정 (0~1, 합이 1)</h3>
+    <div style="margin-top: 16px">
+      <h3 style="margin-bottom:6px;">🧪 가중치 설정 (0~1, 합이 1)</h3>
       <label>구름량:</label><input type="number" id="w_cloud" value="0.5" step="0.1" min="0" max="1" style="width:60px;">
       <label>습도:</label><input type="number" id="w_humidity" value="0.2" step="0.1" min="0" max="1" style="width:60px;">
       <label>풍속:</label><input type="number" id="w_wind" value="0.2" step="0.1" min="0" max="1" style="width:60px;">
@@ -104,7 +116,8 @@
     <div>
       <div id="aiModelDesc" class="ai-desc" style="display:none"></div>
       <div id="resultPanel"></div>
-      <div id="compareBox" style="display:none"></div>
+      <div id="compareBox"></div>
+      <div id="ctBox"></div>
       <div id="matchScoreBox" class="match-score"></div>
     </div>
     <div class="chart-switch">
@@ -207,7 +220,6 @@
         return true;
       }
     }
-
     // =========== AI 모델(강수확률) 다중회귀+오프셋 보정 ==============
     async function fitAIMultiLinear(lat, lon, startDate, days) {
       // 30일치 데이터를 가져와서 최근 20일 학습, 미래 5일 예측에 사용
@@ -239,7 +251,6 @@
         return coeffs;
       }
       const coeffs = leastSquares(X, Y);
-
       // 예측값을 실제값에 맞게 보정(전체 데이터에 대해 평균 오차를 산출, 오프셋 보정)
       let errSum = 0;
       for(let i=0; i<nTrain; i++) {
@@ -249,7 +260,6 @@
       const offset = errSum / nTrain; // 평균 오차
       // offset을 회귀계수 절편에 더해 실제와 차이가 나지 않게 보정
       coeffs[0] += offset;
-
       return { coeffs, data: {P,C,H,W,T}, dates: data.daily.time, offset, nTrain };
     }
     async function importMath() {
@@ -267,24 +277,20 @@
       d.setDate(d.getDate()+diff);
       return d.toISOString().split('T')[0];
     }
-
     // ========================= 예측 전체 =========================
     async function predictAll() {
       if(!weightCheck()) return;
       const lat = document.getElementById('lat').value;
       const lon = document.getElementById('lon').value;
       const selDate = document.getElementById('selectedDate').value;
-
       // 모델 학습 (최근 20일)
       const model = await fitAIMultiLinear(lat, lon, selDate, 5);
-
       // 오늘+5일 모두 데이터 가져옴
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
         + `&daily=precipitation_probability_mean,cloudcover_mean,relative_humidity_2m_max,windspeed_10m_max,temperature_2m_max&timezone=auto`
         + `&start_date=${selDate}&end_date=${getNextDate(selDate,4)}`;
       const res = await fetch(url);
       const data = await res.json();
-
       let days = [];
       for(let i=0;i<data.daily.time.length;i++) {
         days.push({
@@ -301,21 +307,18 @@
       const wh = parseFloat(document.getElementById("w_humidity").value);
       const ww = parseFloat(document.getElementById("w_wind").value);
       const wt = parseFloat(document.getElementById("w_temp").value);
-
       for(let i=0;i<days.length;i++) {
         // 내 가중치 예측
         days[i].P_user = wr*days[i].C + wh*days[i].H + ww*days[i].W + wt*days[i].T;
         // AI 예측 (다중회귀)
         let X = [1, days[i].C, days[i].H, days[i].W, days[i].T];
         days[i].P_ai = model.coeffs[0] + model.coeffs[1]*days[i].C + model.coeffs[2]*days[i].H + model.coeffs[3]*days[i].W + model.coeffs[4]*days[i].T;
-        // 범위 조정
         days[i].P_ai = Math.max(0, Math.min(100, days[i].P_ai));
       }
-
       // AI 모델 설명 강화 (오프셋 보정까지 안내)
       let desc = `<b>[AI 모델: 다중회귀 + 평균 오차 보정]</b><br>
       이 AI 모델은 최근 20일간의 실제 날씨 데이터를 사용하여,<br>
-      <b>강수확률(P)</b>이 구름량(C), 습도(H), 풍속(W), 기온(T)에 어떻게 영향을 받는지 <b>다중선형회귀</b>로 학습합니다.<br>
+      <b>강수확률(P)</b>이 구름량(C), 습도(H), 풍속(W), 기온(T)에 어떻게 영향을 미치는지 <b>다중선형회귀</b>로 학습합니다.<br>
       학습 과정에서 모델 예측값이 실제값과 평균적으로 일치하도록,<br>
       <b>전체 평균 오차(offset)를 자동 보정</b>하여 AI 예측값이 실제에 최대한 유사하게 나오도록 설계했습니다.<br>
       회귀식:<br>
@@ -323,20 +326,14 @@
       (최근 ${model.nTrain}일 실제 데이터로 학습, 평균 오차(offset)=${model.offset.toFixed(2)})`;
       document.getElementById('aiModelDesc').innerHTML = desc;
       document.getElementById('aiModelDesc').style.display = '';
-
       // 하루/5일 예측 그래프
       drawChartDay(days[0]);
       drawChart5day(days);
-
-      // 예측 비교 표 및 결과
+      // 예측 비교 표 및 결과 + CT
       renderCompare(days);
-
       // 일치개수 판정
       showMatchScore(days);
-
       // 문제 문항 반영(문제풀이에 활용)
-      updateQuizProblem(days);
-
       window.day_for_quiz = days[0]; // 1일치 문제풀이용
     }
     // 하루 예측 그래프: 실제, 내 가중치, AI모델
@@ -412,7 +409,7 @@
         plugins: [ChartDataLabels]
       });
     }
-    // 비교표 및 판정
+    // 비교표 및 판정 + CT박스
     function renderCompare(days) {
       // 분류 결과
       function getResult(val) {
@@ -445,14 +442,29 @@
       <span style="color:#888">그래프, 표, 오차값을 바탕으로 직접 판단해보세요.</span></div>
       `;
       document.getElementById('compareBox').innerHTML = html;
-      document.getElementById('compareBox').style.display = '';
       // MAE 계산
       const mae_user = (days.reduce((s,x)=>s+Math.abs(x.P_real-x.P_user),0)/days.length).toFixed(2);
       const mae_ai = (days.reduce((s,x)=>s+Math.abs(x.P_real-x.P_ai),0)/days.length).toFixed(2);
       document.getElementById('resultPanel').innerHTML = `<b>5일간 평균 오차(MAE)</b> <br>
         나의 예측: <b>${mae_user}</b> &nbsp; | &nbsp; AI 모델 예측: <b>${mae_ai}</b>`;
+      // CT 사고력 실습 박스 추가
+      let ctHTML = `
+        <div class="judge-box" style="background:#fffde7; border:2px solid #ffd600; margin-top:18px;">
+          <b>CT 사고력 실습: 나의 예측값이 AI 모델과 유사해지려면?</b><br>
+          <ul>
+            <li><b>문제 분해:</b> 예측에 사용된 각 요소(구름량, 습도, 풍속, 기온)가 결과에 어떤 영향을 미치는지 분석해보세요.</li>
+            <li><b>패턴 인식:</b> AI 모델과 나의 예측 결과가 다를 때 반복적으로 나타나는 경향성(패턴)이 있는지 찾아보세요.</li>
+            <li><b>추상화:</b> 불필요한 요소를 줄이고 예측에 핵심적으로 작용하는 변수를 추려보세요.</li>
+            <li><b>알고리즘 설계:</b> 내가 입력한 가중치를 어떻게 조정하면 AI 모델의 회귀계수와 더 가까워질지 전략을 세워보세요.</li>
+          </ul>
+          <label for="ctStudentInput"><b>실습:</b> 위 4단계를 참고하여, <u>내 예측값이 AI 모델 예측값과 더 유사해지려면 어떻게 하면 좋을지</u> 간단히 작성해보세요.</label><br>
+          <textarea id="ctStudentInput" rows="3" style="width:98%; border-radius:8px; margin:6px 0;" placeholder="여기에 작성하세요..."></textarea>
+          <button class="btn" style="background:#ffeb3b; color:#0d224c; margin-top:7px;" onclick="showCTSampleAnswer()">예시 답안 보기</button>
+          <div id="ctSampleAns" style="margin-top:8px; color:#314c92; font-size:15px; display:none;"></div>
+        </div>
+      `;
+      document.getElementById('ctBox').innerHTML = ctHTML;
     }
-    // 일치개수 및 피드백
     function showMatchScore(days) {
       let matchCount = 0;
       for(let i=0;i<days.length;i++) {
@@ -471,7 +483,18 @@
       document.getElementById('matchScoreBox').innerHTML = msg;
     }
     function getType(v) { return v>=70?"필수":v>=50?"권장":"선택"; }
-
+    // CT 예시 답안 토글 함수
+    function showCTSampleAnswer() {
+      document.getElementById('ctSampleAns').style.display = '';
+      document.getElementById('ctSampleAns').innerHTML = `
+        <b>[예시 답안]</b><br>
+        1. <b>문제 분해</b>: 예측에 영향을 주는 요소별(구름량, 습도, 풍속, 기온) 중요도를 따로 분석한다.<br>
+        2. <b>패턴 인식</b>: AI 모델과 내 예측이 크게 차이 나는 날에는 어떤 변수가 주로 달랐는지 찾아본다.<br>
+        3. <b>추상화</b>: 예측에 거의 영향이 없는 변수는 가중치를 줄이고, 실제로 영향이 큰 변수의 가중치를 높인다.<br>
+        4. <b>알고리즘 설계</b>: AI 회귀계수와 내 가중치 값을 최대한 유사하게 맞추어 입력해 본다.<br>
+        <u>이렇게 CT 사고과정을 통해 가중치를 조정하면, AI 모델과 내 예측의 차이를 줄일 수 있다.</u>
+      `;
+    }
     // ================= 문제1 랜덤생성/풀이 =================
     let q1 = {}, solved1=false, solved2=false;
     function resetQ1() {
@@ -551,7 +574,6 @@
       solved1=true;
       checkFinish();
     }
-
     // =============== 계산형(정수해) 4지선다 문항2 ================
     let q2 = {};
     function resetQ2() {
